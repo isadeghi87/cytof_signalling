@@ -22,6 +22,7 @@ if (length(missing)) {
 dir.create("summary_figures", showWarnings = FALSE)
 
 um <- fread("UMAP_phospho_coordinates.csv")
+tsne <- if (file.exists("TSNE_phospho_coordinates.csv")) fread("TSNE_phospho_coordinates.csv") else NULL
 fun <- fread("functional_cluster_annotations.csv")
 bias <- fread("cluster_cytokine_bias.csv")
 sum_dt <- fread("cluster_signaling_summary.csv")
@@ -30,10 +31,10 @@ sum_dt <- fread("cluster_signaling_summary.csv")
 ## a) UMAP by phenotype
 ###############################################################################
 
-## join phenotype by cytokine+cluster
 um[, cluster := as.integer(cluster)]
 fun[, cluster := as.integer(cluster)]
 
+## join phenotype by cytokine+cluster
 um_pheno <- merge(um, fun[, .(cytokine, cluster, phenotype)],
                   by = c("cytokine","cluster"),
                   all.x = TRUE)
@@ -45,6 +46,21 @@ p1 <- ggplot(um_pheno,
   labs(title = "UMAP coloured by functional phenotype")
 
 ggsave("summary_figures/UMAP_by_phenotype.png", p1, width = 7, height = 6)
+
+if (!is.null(tsne)) {
+  tsne[, cluster := as.integer(cluster)]
+  tsne_pheno <- merge(tsne, fun[, .(cytokine, cluster, phenotype)],
+                      by = c("cytokine","cluster"),
+                      all.x = TRUE)
+
+  p1_ts <- ggplot(tsne_pheno,
+                  aes(TSNE1, TSNE2, colour = phenotype)) +
+    geom_point(alpha = 0.7, size = 0.5) +
+    theme_bw() +
+    labs(title = "t-SNE coloured by functional phenotype")
+
+  ggsave("summary_figures/TSNE_by_phenotype.png", p1_ts, width = 7, height = 6)
+}
 
 ###############################################################################
 ## b) UMAP by STAT3 cytokine preference
@@ -63,6 +79,21 @@ p2 <- ggplot(um_pref,
 
 ggsave("summary_figures/UMAP_by_cytokine_preference.png", p2,
        width = 7, height = 6)
+
+if (!is.null(tsne)) {
+  tsne_pref <- merge(tsne, bias[, .(cluster_id, best_cytokine_STAT3)],
+                     by.x = "cluster", by.y = "cluster_id",
+                     all.x = TRUE)
+
+  p2_ts <- ggplot(tsne_pref,
+                  aes(TSNE1, TSNE2, colour = best_cytokine_STAT3)) +
+    geom_point(alpha = 0.7, size = 0.5) +
+    theme_bw() +
+    labs(title = "t-SNE coloured by best STAT3 cytokine")
+
+  ggsave("summary_figures/TSNE_by_cytokine_preference.png", p2_ts,
+         width = 7, height = 6)
+}
 
 ###############################################################################
 ## c) Activation bars by cytokine

@@ -12,6 +12,7 @@ suppressPackageStartupMessages({
   library(pheatmap)
   library(uwot)
   library(mgcv)
+  library(Rtsne)
 })
 
 set.seed(1)
@@ -329,7 +330,7 @@ for (mk in phos_markers) {
 }
 
 ###############################################################################
-## PCA & UMAP ON PHOSPHO MEDIANS
+## PCA, t-SNE & UMAP ON PHOSPHO MEDIANS
 ###############################################################################
 
 pm_mat <- as.matrix(pm[, ..phos_markers])
@@ -349,6 +350,20 @@ gp_pca <- ggplot(pca_scores, aes(PC1, PC2, colour = cytokine)) +
 
 ggsave("PCA_phospho.png", gp_pca, width = 7, height = 6)
 ggsave("PCA_phospho.pdf", gp_pca, width = 7, height = 6)
+
+## t-SNE on phospho medians
+ts <- Rtsne(pm_scaled, perplexity = 30, check_duplicates = FALSE)
+ts_dt <- data.table(TSNE1 = ts$Y[, 1], TSNE2 = ts$Y[, 2])
+ts_dt <- cbind(pm[, .(file_base, cluster, time_min, cytokine)], ts_dt)
+fwrite(ts_dt, "TSNE_phospho_coordinates.csv")
+
+gp_ts <- ggplot(ts_dt, aes(TSNE1, TSNE2, colour = cytokine)) +
+  geom_point(alpha = 0.7, size = 0.8) +
+  theme_bw() +
+  labs(title = "t-SNE on phospho medians")
+
+ggsave("TSNE_phospho.png", gp_ts, width = 7, height = 6)
+ggsave("TSNE_phospho.pdf", gp_ts, width = 7, height = 6)
 
 um <- umap(pm_scaled, n_neighbors = 15, min_dist = 0.3)
 um_dt <- data.table(UMAP1 = um[,1], UMAP2 = um[,2])

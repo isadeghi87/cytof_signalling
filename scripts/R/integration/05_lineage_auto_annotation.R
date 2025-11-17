@@ -308,7 +308,7 @@ if ("pathway_phenotype" %in% colnames(final_anno)) {
 readr::write_lines(summary_lines, "lineage_annotation/cluster_lineage_summary.md")
 message("Wrote lineage_annotation/cluster_lineage_summary.md")
 
-## 10) Optional simple UMAP overlay if coordinates are available
+## 10) Optional simple UMAP/TSNE overlay if coordinates are available
 
 umap_file <- "UMAP_phospho_coordinates.csv"
 if (file.exists(umap_file)) {
@@ -351,6 +351,47 @@ if (file.exists(umap_file)) {
   }
 } else {
   message("UMAP_phospho_coordinates.csv not found, skipping UMAP overlay")
+}
+
+tsne_file <- "TSNE_phospho_coordinates.csv"
+if (file.exists(tsne_file)) {
+  message("10) Found TSNE_phospho_coordinates.csv, generating TSNE overlays")
+  tsne <- readr::read_csv(tsne_file, show_col_types = FALSE)
+  if (all(c("cluster", "TSNE1", "TSNE2") %in% colnames(tsne))) {
+    tsne2 <- tsne %>%
+      mutate(cluster = as.character(cluster)) %>%
+      left_join(final_anno %>% select(cluster, auto_label), by = "cluster")
+
+    p_ts <- ggplot(tsne2, aes(x = TSNE1, y = TSNE2, color = auto_label)) +
+      geom_point(size = 0.3, alpha = 0.6) +
+      theme_classic() +
+      theme(legend.position = "right") +
+      labs(title = "t-SNE colored by automatic lineage annotation")
+
+    ggsave("lineage_annotation/TSNE_by_auto_lineage.png", p_ts,
+           width = 7, height = 6, dpi = 300)
+
+    if ("pathway_phenotype" %in% colnames(final_anno)) {
+      tsne3 <- tsne2 %>%
+        left_join(final_anno %>% select(cluster, pathway_phenotype),
+                  by = "cluster") %>%
+        mutate(lineage_pathway = interaction(auto_label, pathway_phenotype,
+                                             drop = TRUE, lex.order = TRUE))
+
+      p_ts2 <- ggplot(tsne3, aes(x = TSNE1, y = TSNE2, color = lineage_pathway)) +
+        geom_point(size = 0.3, alpha = 0.6) +
+        theme_classic() +
+        theme(legend.position = "right") +
+        labs(title = "t-SNE colored by lineage and pathway phenotype")
+
+      ggsave("lineage_annotation/TSNE_by_lineage_and_phenotype.png", p_ts2,
+             width = 7, height = 6, dpi = 300)
+    }
+  } else {
+    warning("TSNE_phospho_coordinates.csv exists but lacks cluster/TSNE1/TSNE2 columns, skipping TSNE overlay")
+  }
+} else {
+  message("TSNE_phospho_coordinates.csv not found, skipping TSNE overlay")
 }
 
 message("Done.")

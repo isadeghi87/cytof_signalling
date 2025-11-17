@@ -44,7 +44,7 @@ We first assessed technical performance and data completeness using anchor-based
 
 ![Figure 1. Cytokine and timepoint coverage across samples.](diagnostic_plots/cytokine_time_coverage.png){width=0.6\textwidth}
 
-CytoNorm-based normalisation was applied using a series of scripts (`scripts/R/01_run_cytonorm_v2.R`, `02_train_cytonorm_unstim.R`, `03_apply_cytonorm_unstim.R`, `03b_consolidate_normalized.R`, `04_qc_density_and_medians.R`, `05_rescale_and_qc.R`, `06_more_qc.R`). Anchor samples spanning batches were used to train batch-specific transformations that align marker intensity distributions across batches. Post-normalisation diagnostics, including global and lineage-level normalisation plots (`summary/normalization_efficiency.pdf`, `summary/normalization_efficiency_lineage.pdf`) and density overlays for key channels (`summary/more_qc/density_overlays_top_channels.pdf`), showed minimal residual batch-specific shifts, with stable distributions for both lineage and phospho markers (Figure 1B–D).
+CytoNorm-based normalisation was applied using a series of scripts (`scripts/R/01_run_cytonorm.R`, `scripts/R/02_train_cytonorm.R`, `scripts/R/03_apply_cytonorm.R`, `scripts/R/03b_consolidate_normalized.R`, `scripts/R/04_qc_plots.R`, `scripts/R/05_plot_normalization_efficiency.R`, `scripts/R/05_export_summary.R`), complemented by diagnostic utilities (`scripts/R/diagnostic_signaling_qc.R`). Anchor samples spanning batches were used to train batch-specific transformations that align marker intensity distributions across batches. Post-normalisation diagnostics, including global and lineage-level normalisation plots (`summary/normalization_efficiency.pdf`, `summary/normalization_efficiency_lineage.pdf`) and density overlays for key channels (`summary/more_qc/density_overlays_top_channels.pdf`), showed minimal residual batch-specific shifts, with stable distributions for both lineage and phospho markers (Figure 1B–D).
 
 ![Figure 2. Normalisation efficiency across markers and batches.](summary/normalization_efficiency.pdf){width=0.6\textwidth}
 
@@ -61,9 +61,9 @@ Low-dimensional embeddings of single-cell events produced by UMAP and t-SNE (`sc
 
 ### Global phospho-signalling is structured along STAT3 and STAT5 axes
 
-To explore global signalling structure, we summarised phospho marker medians per cluster, cytokine, and timepoint and projected these profiles into low-dimensional space. Principal component analysis (PCA; `PCA_phospho.pdf/png`) and UMAP (`UMAP_phospho.pdf/png`) were computed on arcsinh- or z-scaled phospho medians, using markers defined as phospho/functional in the panel.
+To explore global signalling structure, we summarised phospho marker medians per cluster, cytokine, and timepoint and projected these profiles into low-dimensional space. Principal component analysis (PCA; `PCA_phospho.pdf/png`), t-SNE (`TSNE_phospho.png/pdf`) and UMAP (`UMAP_phospho.pdf/png`) were computed on arcsinh- or z-scaled phospho medians, using markers defined as phospho/functional in the panel.
 
-In both PCA and UMAP embeddings, clusters and conditions arranged along major axes corresponding to STAT5- and STAT3-associated markers, with secondary variation contributed by TCR-proximal and metabolic/stress markers. Early IL-2 and IL-15 conditions clustered along a STAT5-dominated axis, while IL-21 responses, especially at 15–60 minutes, were displaced towards a STAT3-dominated axis. CD3 alone produced modest, transient deviations from baseline along TCR-proximal dimensions. UMAP overlays coloured by inferred functional phenotype (`summary_figures/UMAP_by_phenotype.png`) illustrated this organisation, with STAT3-, STAT5-, TCR-, metabolic-, and stress-dominant clusters occupying distinct regions (Figure 3A–C).
+In PCA, t-SNE and UMAP embeddings, clusters and conditions arranged along major axes corresponding to STAT5- and STAT3-associated markers, with secondary variation contributed by TCR-proximal and metabolic/stress markers. Early IL-2 and IL-15 conditions clustered along a STAT5-dominated axis, while IL-21 responses, especially at 15–60 minutes, were displaced towards a STAT3-dominated axis. CD3 alone produced modest, transient deviations from baseline along TCR-proximal dimensions. UMAP and t-SNE overlays coloured by inferred functional phenotype (`summary_figures/UMAP_by_phenotype.png`, `summary_figures/TSNE_by_phenotype.png`) illustrated this organisation, with STAT3-, STAT5-, TCR-, metabolic-, and stress-dominant clusters occupying distinct regions (Figure 3A–C).
 
 ### Time-resolved limma modelling defines cytokine-specific signalling kinetics
 
@@ -202,10 +202,11 @@ To explore global signalling patterns, we computed low-dimensional embeddings of
 
 Cluster- and sample-level phospho marker medians were computed from the normalised data, using tables such as `phospho_medians/phos_medians_by_sample_cluster.csv` and `diff_phos_results/phos_medians_by_sample_cluster.csv`. For each cluster, cytokine, and timepoint, we summarised phospho markers that represent key signalling pathways.
 
-Principal component analysis (PCA) and UMAP were computed on arcsinh- or z-scaled phospho medians, using scripts in `scripts/R/diagnostic_signaling_qc.R` and related utilities. Outputs included:
+Principal component analysis (PCA), t-SNE and UMAP were computed on arcsinh- or z-scaled phospho medians, using scripts in `scripts/R/diagnostic_signaling_qc.R` and related utilities. Outputs included:
 
 - `PCA_phospho.pdf/png` – PCA of cluster-level phospho medians, with points coloured by cytokine–timepoint combinations and/or clusters.
-- `UMAP_phospho.pdf/png` – UMAP of the same data, coloured by clusters, cytokine–timepoint, or functional phenotype (`summary_figures/UMAP_by_phenotype.png`).
+- `UMAP_phospho.pdf/png` – UMAP of the same data, coloured by clusters, cytokine–timepoint, or functional phenotype (`summary_figures/UMAP_by_phenotype.png`, `summary_figures/UMAP_by_cytokine_preference.png`).
+- `TSNE_phospho.png/pdf` – t-SNE of the same data, with corresponding overlays coloured by functional phenotype and cytokine preference (`summary_figures/TSNE_by_phenotype.png`, `summary_figures/TSNE_by_cytokine_preference.png`).
 
 These embeddings revealed axes dominated by STAT5- and STAT3-related markers, with additional structure from TCR-proximal and metabolic/stress markers, and were used to interpret cytokine-specific signalling programmes.
 
